@@ -20,8 +20,15 @@ function Write-Section([string]$Message) {
     Write-Host "=== $Message ===" -ForegroundColor Cyan
 }
 function Invoke-Checked([string]$File, [string[]]$Arguments, [string]$FailureMessage) {
-    & $File @Arguments
-    if ($LASTEXITCODE -ne 0) { throw $FailureMessage }
+    $savedErrorPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        & $File @Arguments
+        $nativeExitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $savedErrorPreference
+    }
+    if ($nativeExitCode -ne 0) { throw $FailureMessage }
 }
 function Refresh-ProcessPath {
     $candidates = @(
