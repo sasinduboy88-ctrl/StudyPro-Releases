@@ -71,19 +71,48 @@ try {
     Write-Section "2/6 — Sign in to GitHub"
     Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue
     Remove-Item Env:GITHUB_TOKEN -ErrorAction SilentlyContinue
-    & gh auth status --hostname github.com 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "A browser sign-in will open. Sign in to the GitHub account that owns StudyPro."
-        Invoke-Checked "gh" @("auth", "login", "--hostname", "github.com", "--git-protocol", "https", "--web", "--scopes", "repo,workflow") "GitHub sign-in did not complete."
-    } else {
-        Write-Host "Refreshing GitHub CLI scopes for private repository automation..."
-        Invoke-Checked "gh" @("auth", "refresh", "--hostname", "github.com", "--scopes", "repo,workflow") "GitHub permission refresh failed."
+    # Verify authentication with a real GitHub API request. Do not infer login
+    # state only from gh auth status output.
+    $githubUser = ""
+    $authOutput = & gh api user --jq ".login" 2>$null
+    $authExitCode = $LASTEXITCODE
+    if ($authExitCode -eq 0 -and $null -ne $authOutput) {
+        $githubUser = ([string]($authOutput -join "")).Trim()
     }
 
-    $githubUser = (& gh api user --jq ".login").Trim()
-    if ($LASTEXITCODE -ne 0 -or $githubUser -ne $ExpectedGitHubUser) {
+    if ([string]::IsNullOrWhiteSpace($githubUser)) {
+        Write-Host "GitHub CLI is not signed in. Starting official browser sign-in..."
+        Write-Host "A GitHub browser window will open. Approve access for GitHub CLI."
+        & gh auth login --hostname github.com --git-protocol https --web --scopes repo,workflow
+        $loginExitCode = $LASTEXITCODE
+        if ($loginExitCode -ne 0) {
+            throw "GitHub browser sign-in did not finish. Complete the browser/device approval, then run this setup again."
+        }
+
+        $authOutput = & gh api user --jq ".login" 2>$null
+        $authExitCode = $LASTEXITCODE
+        if ($authExitCode -eq 0 -and $null -ne $authOutput) {
+            $githubUser = ([string]($authOutput -join "")).Trim()
+        }
+        if ([string]::IsNullOrWhiteSpace($githubUser)) {
+            throw "GitHub sign-in was not confirmed. Run 'gh auth login' in PowerShell, finish browser approval, then retry."
+        }
+    } else {
+        Write-Host "GitHub CLI authentication found for $githubUser."
+        Write-Host "Checking required repository/workflow permissions..."
+        Invoke-Checked "gh" @("auth", "refresh", "--hostname", "github.com", "--scopes", "repo,workflow") "GitHub permission refresh failed. Complete browser approval if one opens."
+        $authOutput = & gh api user --jq ".login" 2>$null
+        $authExitCode = $LASTEXITCODE
+        if ($authExitCode -ne 0 -or $null -eq $authOutput) {
+            throw "GitHub authentication could not be confirmed after permission refresh."
+        }
+        $githubUser = ([string]($authOutput -join "")).Trim()
+    }
+
+    if ($githubUser -ne $ExpectedGitHubUser) {
         throw "GitHub is signed in as '$githubUser'. Sign in as $ExpectedGitHubUser and run this setup again."
     }
+    Write-Host "GitHub account verified: $githubUser" -ForegroundColor Green
 
     $isAdmin = (& gh api "repos/$SourceRepo" --jq ".permissions.admin").Trim()
     if ($LASTEXITCODE -ne 0 -or $isAdmin -ne "true") {
