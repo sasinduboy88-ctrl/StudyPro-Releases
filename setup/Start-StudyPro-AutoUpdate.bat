@@ -6,7 +6,7 @@ set "SETUP_SCRIPT=%TEMP%\StudyPro-AutoUpdate-Setup.ps1"
 echo.
 echo Preparing the official StudyPro setup helper from this file...
 echo No network download is required for the setup helper.
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $lines=Get-Content -LiteralPath $env:SELF -Encoding UTF8; $start=[Array]::IndexOf($lines,'# STUDYPRO_SETUP_PAYLOAD_BEGIN'); $finish=[Array]::IndexOf($lines,'# STUDYPRO_SETUP_PAYLOAD_END'); if($start -lt 0 -or $finish -le $start){throw 'The embedded setup helper is incomplete.'}; $payload=$lines[($start+1)..($finish-1)]; Set-Content -LiteralPath $env:SETUP_SCRIPT -Value $payload -Encoding UTF8"
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $lines=Get-Content -LiteralPath $env:SELF -Encoding UTF8; $begin='# STUDYPRO_SETUP_'+'PAYLOAD_BEGIN'; $end='# STUDYPRO_SETUP_'+'PAYLOAD_END'; $start=[Array]::IndexOf($lines,$begin); $finish=[Array]::IndexOf($lines,$end); if($start -lt 0 -or $finish -le $start){throw 'The embedded setup helper is incomplete.'}; $payload=$lines[($start+1)..($finish-1)]; Set-Content -LiteralPath $env:SETUP_SCRIPT -Value $payload -Encoding UTF8"
 if errorlevel 1 (
   echo.
   echo Could not prepare the built-in setup helper.
