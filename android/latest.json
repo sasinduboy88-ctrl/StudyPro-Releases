@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "packageName": "com.studypro.student",
+  "version": "1.0.5",
+  "versionCode": 1000005,
+  "apkUrl": "",
+  "sha256": "",
+  "sizeBytes": 0,
+  "notes": "Initial Android auto-update baseline. No newer Android update has been published yet."
+}
