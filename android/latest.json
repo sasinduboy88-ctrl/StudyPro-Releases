@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "packageName": "com.studypro.student",
-  "version": "1.0.5",
-  "versionCode": 1000005,
-  "apkUrl": "",
-  "sha256": "",
-  "sizeBytes": 0,
-  "notes": "Initial Android auto-update baseline. No newer Android update has been published yet."
+  "version": "1.0.6",
+  "versionCode": 1000006,
+  "apkUrl": "https://github.com/sasinduboy88-ctrl/StudyPro-Releases/releases/download/android-v1.0.6/StudyPro-Android-1.0.6.apk",
+  "sha256": "2E0F0DD103FCAC9D9FA055288833698DD0DE171FC740EC275E69410AAFB533C0",
+  "sizeBytes": 22227415,
+  "notes": "StudyPro Android 1.0.6 public release."
 }
